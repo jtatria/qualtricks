@@ -31,7 +31,7 @@ load_responses_csv <- function(
     sub <- split[2]
     nms %<>% gsub( rxp, sub, . )
   }
-  data <- tryCatch(
+  df <- tryCatch(
     data.table::fread( file, skip="{", data.table=FALSE, colClasses=colClasses, ... ),
     error=function( e ) {
       if( grepl( "skip", e$message ) ) {
@@ -40,14 +40,14 @@ load_responses_csv <- function(
     }
   )
 
-  import_info <- names( data )
+  import_info <- names( df )
   # TODO: qualtricks::validate( import_info )
-  names( data ) <- nms
+  names( df ) <- nms
 
   if( clean.str ) {
-      for( col in names( data ) ) {
+      for( col in names( df ) ) {
           clz <- class( df[[ col ]] )
-          data[[ col ]] %<>%
+          df[[ col ]] %<>%
               gsub( "^\\s+", "" , . ) %>% # leading whitepace
               gsub( "\\s+$", "" , . ) %>% # trailing whitespace
               gsub( "\"+", "\"", . )  %>% # embedded "'s
@@ -55,7 +55,7 @@ load_responses_csv <- function(
       }
   }
 
-  return( data )
+  return( df )
 }
 
 #' @export
