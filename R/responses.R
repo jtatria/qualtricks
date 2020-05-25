@@ -21,7 +21,9 @@ load_responses <- function( file, ... ) {
 
 #' @export
 #' @importFrom data.table fread
-load_responses_csv <- function( file, names.subs='\"(.*)\":\\1', skip="{", colClasses="character", ... ) {
+load_responses_csv <- function(
+  file, names.subs='\"(.*)\":\\1', colClasses="character", clean.str=TRUE, ...
+) {
   nms <- ( readLines( file, n=1 ) %>% strsplit( split="," ) )[[1]]
   if( !is.null( names.subs ) ) {
     split <- strsplit( names.subs, ":" )[[1]]
@@ -29,14 +31,30 @@ load_responses_csv <- function( file, names.subs='\"(.*)\":\\1', skip="{", colCl
     sub <- split[2]
     nms %<>% gsub( rxp, sub, . )
   }
-  data <- if( chk_pkg( "data.table" ) ) {
-    data.table::fread( file, skip=skip, data.table=FALSE, ... )
-  } else {
-    stopf( "No fallback dependency for %s. Please install package and retry.", "data.table" )
-  }
+  data <- tryCatch(
+    data.table::fread( file, skip="{", data.table=FALSE, colClasses=colClasses, ... ),
+    error=function( e ) {
+      if( grepl( "skip", e$message ) ) {
+        data.table::fread( file, skip=0, data.table=FALSE, colClasses=colClasses, ... )
+      }
+    }
+  )
+
   import_info <- names( data )
   # TODO: qualtricks::validate( import_info )
   names( data ) <- nms
+
+  if( clean.str ) {
+      for( col in names( data ) ) {
+          clz <- class( df[[ col ]] )
+          data[[ col ]] %<>%
+              gsub( "^\\s+", "" , . ) %>% # leading whitepace
+              gsub( "\\s+$", "" , . ) %>% # trailing whitespace
+              gsub( "\"+", "\"", . )  %>% # embedded "'s
+              as( clz ) # u don't mess with the type
+      }
+  }
+
   return( data )
 }
 
