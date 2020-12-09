@@ -21,7 +21,7 @@ load_responses <- function( file, ... ) {
 
 #' @export
 #' @importFrom data.table fread
-load_responses_csv <- function(
+load_responses_csv <- function( # TODO: clean.str should be FALSE by default
   file, names.subs='\"(.*)\":\\1', colClasses="character", clean.str=TRUE, ...
 ) {
   nms <- ( readLines( file, n=1 ) %>% strsplit( split="," ) )[[1]]
